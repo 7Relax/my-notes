@@ -1,0 +1,297 @@
+java基础：
+	1、基本数据类型：byte（占1个字节，2^8-1=127）、short（2）、int（4）、long（8）、float（4）、double（8）、char（2，2^16-1=65535）、boolean（占1个字节，前7位是0）
+	2、什么是自动拆装箱：java1.5后的一个新特性：java编译器在基本类型和对应的引用类型（这里指包装类）之间做一个转化。比如把int转化为Integer等等。反之为自动拆箱
+	3、java语言的特点：封装、继承、多态
+		封装：
+		继承：
+		多态：
+	4、接口与抽象类的区别：
+		(1) 接口中所有方法隐含都是抽象的。而抽象类则可以同时包含抽象和非抽象的方法
+		(2) 接口中声明的变量默认都是final，而抽象类可以包含非final的变量
+		(3) 接口中成员函数默认都会public。抽象类的成员函数可以是private，protected或者public
+		(4) 类可以不实现抽象类和接口声明中的所有方法，这种情况下，类也必须声明为抽象的
+	5、什么时候用接口，什么时候用抽象类：
+	6、jdk与jre区别是什么？
+		java开发工具包（jdk）是完整的java软件开发包，包含了jre，编译器和其他工具（比如：javadoc，java调试器），可以让开发者开发，编译，执行java应用程序
+		java运行时环境（jre）是将要执行的java程序的java虚拟机，同时也包含了执行applet需要的浏览器插件。
+	7、Object类中的相关方法
+		(1) == 		：比较两个变量是否指向同一个对象（比较引用）
+		(2) equals  ：比较两个对象的内容是否相等，需要用重写后的equals（若不重写则为 == ），equals一般是给用户来调用的，返回值是true/false
+		(3) hashCode：计算出对象的特征值，返回值是int值，hashCode一般不是给用户直接调用的
+		(4)	equals 与 hashCode相关：		
+				* 一般来说重写了equals方法后也要重写hashCode方法，除非这个类不需要使用到类似HashSet这样的集合来存放数据
+				* 所有参与计算 hashCode() 返回值的关键属性，都应该用于作为 equals() 比较的标准（尽可能的使equals比较不相同时，hashCode也不相同）
+				* equals相同那么hashCode可相同、可不同
+				* equals不相同那么hashCode一定不能相同
+				* 如果hashCode相同会有什么问题？
+
+	    (15) equals 与 hashCode的重要性体现在什么地方？
+	    	* 
+	    	* hashMap通过equals和hashCode确定键值对索引
+
+	8、java集合类相关框架：
+		Collections：操作集合的工具类
+		Collection：
+			List：
+				介绍：有序可重复集（List extends Collection）
+				实现类：
+					(1) ArrayList
+						优点：底层数据结构是数组，查询快，增删慢
+						缺点：线程不安全，效率高
+					(2) Vector
+						优点：底层数据结构是数组，查询快，增删慢
+						缺点：线程安全，效率低
+					(3) LinkedList
+						优点：底层数据结构是双向链表实现，查询慢，增删快
+						缺点：线程不安全，效率高
+					(4) ArrayList、Vector、LinkedList的异同点？
+			Set：
+				介绍：
+					无序不可重复集（元素无放入顺序，元素不可重复，重复元素被会覆盖掉）元素虽然无放入顺序，但是元素在Set中的位置是由该元素的HashCode决定的，其位置其实是固定的，加入Set的Object必须定义equals()方法，另外List支持for循环，也就是通过下标来遍历，也可以用迭代器，但是Set只能用迭代器，因为它是无序的，无法用下标来取得想要的值。
+				实现类：
+					(1) HashSet
+							底层数据结构是哈希表（无序，唯一）
+							如何来保证元素唯一性？
+								- HashSet虽然是通过equals() 和 hashCode()来判断两个元素是否相等，但只能保证HashSet中不会出现equals和hashCode都相等的元素：
+								- 1、equals相等、hashCode相等     --- 相同元素（不能存入）
+								- 2、equals不相等、hashCode不相等  --- 不同元素（完美存入）
+								- 3、equals相等、hashCode不相等    --- 不同元素（可存入）
+									（那么这两个元素会被HashSet当作两个不同的元素存入HashSet中不同的位置，与设计HashSet的初衷不符（元素不重复））----------- 会报错吗？
+								- 4、equals不相等、hashCode相等    --- 不同元素（可存入）
+									（HashSet会将这两个元素保存在同一个位置，并将超过一个的元素以链表方式保存，这将影响HashSet的效率）
+					(2) LinkedHashSet
+							底层数据结构是链表和哈希表（FIFO插入有序，唯一）
+								- 由链表保证元素有序
+								- 由哈希表保证元素唯一
+								- 根据HashCode的值来决定元素的存储位置
+					(3) TreeSet
+							底层数据结构是红黑树（有序，唯一）
+								<1> 如何保证元素排序的呢？
+									- 自然排序
+									- 比较器排序
+								<2> 如何保证元素唯一性的呢？
+									- 根据比较的返回值是否是0来决定
+
+							TreeSet implements NavigableSet extends SoredSet extends Set
+					(4) HashSet、LinkedHashSet、TreeSet的异同点？
+						介绍：
+							HashSet：只是通用的存储数据的集合
+							LinkedHashSet：主要功能用于保证FIFO即有序的集合（先进先出）
+							TreeSet：主要功能用于排序
+						同：
+							Thread safety：
+								三者都不是线程安全的，如果要使用线程安全可以Collections.synchronizedSet()
+							Duplicates elements：
+								因为三者都实现Set，所以三者都不包含重复元素（元素唯一）
+						异：
+							Performance and Speed：
+								HashSet插入数据最快，其次LinkHashSet，最慢的是TreeSet
+									原因：
+										- HashSet总是比TreeSet性能好，因为HashSet不需要额维护元素的顺序
+										- LinkedHashSet需要用额外的链表维护元素的插入顺序，因此在插入时性能比HashSet低，但在迭代访问（遍历）时性能更高。因为插入的时候即要计算hashCode又要维护链表，而遍历的时候只需要按链表来访问元素。
+							Ordering：
+								HashSet不保证有序；
+								LinkHashSet保证FIFO即按插入顺序排序；
+								TreeSet是内部实现排序，也可以自定义排序规则
+							null：
+								HashSet和LinkHashSet允许存在null数据，但是TreeSet中插入null数据时会报NullPointerException
+						比较：
+							将 "B", "E", "D", "C", "A" 依次 add进HashSet、LinkedHashSet、TreeSet
+							运行结果:
+								Ordering in HashSet : [A, B, C, D, E] (无顺序)
+								Order of element in LinkedHashSet : [B, E, D, C, A] (FIFO插入有序)
+								Order of objects in TreeSet : [A, B, C, D, E] (排序)
+							
+			Queue：
+				介绍：
+				实现类：
+					ConcurrentLinkedQueue
+					PriorityQueue
+				子接口：
+					Deque：
+						介绍：
+							([dek]: 双端队列) 即从队列的两端分别可以入队（offer）和出队（poll），LinkedList实现了该接口。
+							如果将Deque限制为只从一端入队和出队，则可实现“栈”（Stack）的数据结构，
+       						对于栈而言，入栈称之为push，出栈称之为pop，遵循：先进后出原则。
+       						对于操作需要有可追溯性，使用“栈”（如：文件浏览器的后退键、安卓手机的返回键）
+						实现类：
+							LinkedList
+						使用：
+							Deque<String> stack = new LinkedList<String>();
+							stack.push("a");
+							stack.push("b");
+							stack.push("c");
+							System.out.println(stack); // [c, b, a]
+			其它：
+				(1)  要唯一吗？
+						是：Set
+							有序吗？
+								LinkedHashSet 或 TreeSet
+							无序？
+								HashSet
+						如果你知道是Set，但是不知道是哪个Set，就用HashSet
+				(2) 要安全吗？
+						是：Vector
+						否：ArrayList 或 LinkedList
+							查询多：ArrayList
+							增删多：LinkedList
+						如果你知道是List，但是不知道是哪个List，就用ArrayList
+				(3) 如果你知道是Collection集合，但是不知道使用谁，就用ArrayList（这个要看情况啦）
+		Map
+			介绍：
+				* Map接口定义的集合又称查找表（表格），用于存储 "Key - Value" 键值对。
+				* Key可以看成是Value的索引，作为Key的对象在集合中不可以重复（即Key不可以重复）
+				* 根据内部数据结构的不同，Map接口有多种实现类，其中常用的有内部为Hash表实现的HashMap和内部为排序二叉数实现的TreeMap
+				* Map（查找表）：内容可以看作是一个多行两列的表格。
+			注意：
+				equals相同，hashCode值必须相同；
+				equals不相同，hashCode应尽量不相同；
+					若很多对象它们的equals不相同但hashCode确相同，这会导致“一个屋子里有许多人”，大大降低检索效率
+						（一个空间里本应只存一个keyValue对，若存在多个，会大大降低了检索效率，因为每个keyValue都是以链表的形式存入对应的bucket，链表检索比数组检索要慢很多）
+			使用：
+				什么时候会用Map：通常我们保存一组数据，而每个数据需要有“说明”（标签）的时候，则可以使用Map
+					Key：保存“说明”
+					Value：保存数据
+				具体：
+					QQ分组：
+						Key			  Value
+						“我的好友”	  List
+						“我的家人”	  List
+						 ...		  ...
+			实现类：
+				(1) HashMap
+						原理：底层是根据Hash表实现
+						介绍：
+							1、无序
+							2、方法不是同步的（线程不安全的、效率高）
+							3、允许null值（key和value都允许）
+							4、父类：AbstractMap
+						子类：LinkedHashMap
+						工作原理：
+							HashMap是以键值对的形式存储。HashMap需要一个hash算法，它使用hashCode和equals方法向HashMap中添加元素和检索元素。
+							当调用put时，HashMap会获取key的hashCode值并通过hash算法来确定将要存储的空间（bucket）  要检索的空间，然后把键值对存储在集合中合适的索引上。如果key已经存在，value会被更新成新值。hashMap的一些重要的特性是它的容量，负载因子和扩容极限
+				(2) Hashtable
+						原理：
+						介绍：
+							1、无序
+							2、大部分方法是同步的（线程安全的、效率低）
+							3、不允许键或值null值
+							4、父类：Dictionary
+				(3) TreeMap
+						原理：底层是根据：排序二叉树实现
+						介绍：有序
+						TreeMap implements NavigableMap extends SortedMap extends Map
+			其它：
+				(1) 什么时候使用Linkedhashmap、Concurrenthashmap、Weakhashmap
+				
+			
+
+    9、相关数据结构
+
+	10、java的IO
+
+	20、其它
+		(1) 能否在static环境中访问访问非static变量？
+			不能。static变量是属于类的。当类被虚拟机载入时，会对static变量进行初始化。非static变量是属于实例的，这个时候实例还没有被创建，编译器会报错
+		(2) static关键字什么意思？java中是否可以覆盖一个private或者是static的方法？
+			static表明一个成员变量或者是成员方法可以在没有所属类的实例变量的情况下访问。
+			java中static方法不能被覆盖，因为方法覆盖是基于运行时动态绑定的，而static方法是编译时静态绑定的。static方法与类的任何实例都不相关。
+			java中不可以覆盖private方法。因为private修饰的变量和方法只能在当前类中使用，如果是其他类继承当前类，继承类中是不能访问到private变量和方法的
+
+java多线程：
+	1、实现线程的方式有：
+	其他：
+		(1) 死锁
+			死锁是值多个线程因资源竞争而造成的一种僵局，若无外力作用，这些线程都无法向前推进。产生死锁的4个必要条件
+			1.互斥条件
+			2.不剥夺条件
+			3.请求和保持条件
+			4.循环等待
+		(2) 
+
+	1、join
+	2、wait
+	3、sleep
+	4、yield
+	5、notify
+	6、notifyAll
+
+
+Spring：
+	1、ioc
+	2、aop
+	3、spring mvc
+
+SpringBoot：
+	1、启动原理
+	2、各种启动器
+	3
+
+SpringCloud：
+	1、Spring Cloud Config
+	2、Eureka
+	3、Histrix
+	4、Feign
+	5、路由：zuul
+	6、
+
+消息中间件：
+	1、RabbitMq
+	2、RocketMq
+	3、Kafaka
+
+缓存：
+	1、redis
+		(1) 常用数据类型
+	2、MemCache
+
+
+数据库相关：
+	1、索引的作用
+	2、数据库调优
+
+设计模式：
+	1、策略模式
+		适用场景：
+
+	2、单例模式
+		原理：
+		适用场景：
+		手写一个单例模式的实现：
+
+	3、装饰模式
+	4、工厂模式
+
+Docker容器：
+	1、什么是docker，它能解决什么问题？
+
+前端：
+	1、Vue2.0
+	2、Jquery
+	3、js
+	4、BootStrap
+	5、Ajax
+
+其它：
+	1、数据库调优
+	2、数据库的索引、约束的作用
+	3、对于restful
+		1、什么是restful架构，restful 与 rest 有什么区别？
+		2、什么时候用get请求，什么用post请求，还是说任意的？
+		3、方法命名要遵循什么规律吗？
+		4、rest规范是什么？
+	4、Spring有哪些特点（如：IOC）、SpringBoot相关知识
+	5、过滤器、拦截器、监听器的区别
+	6、微服务架构相关知识点
+	7、为什么要数据库方言，数据库方言是什么？
+	8、token、session、cookie的区别
+	9、http、https、websocket、webservice(SOAP)、加密算法、消息签名
+	10、Redis可以有哪些作用？
+	11、多线程 & 并发编程 & 网络编程 & JVM
+	12、设计模式
+	13、Shiro原理及用法
+	14、netty：channel、socket、
+	15、模板引擎的原理
+	16、网络的七层参考模型
+	17、读写分离是什么？
+	18、精通分布式系统开发，什么是分布式系统？
