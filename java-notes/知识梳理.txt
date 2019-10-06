@@ -2,31 +2,75 @@ java基础：
     1、基本数据类型：byte（占1个字节，2^8-1=127）、short（2）、int（4）、long（8）、float（4）、double（8）、char（2，2^16-1=65535）、boolean（占1个字节，前7位是0）
     2、什么是自动拆装箱：java1.5后的一个新特性：java编译器在基本类型和对应的引用类型（这里指包装类）之间做一个转化。比如把int转化为Integer等等。反之为自动拆箱
     3、java语言的特点：封装、继承、多态
-        封装：
-        继承：
+        封装：隐藏对象的属性和实现细节，对外提供公共的访问方式，以防止数据的随意访问和修改
+        继承：通过扩展一个已有的类，并继承该类的属性和行为，来创建一个新的类
         多态：
+            三个条件：
+                (1) 满足继承关系
+                (2) 父类引用变量指向子类对象
+                (3) 子类重写父类的方法
+            子类转换成父类时的规则:
+                - 将一个父类的引用指向一个子类的对象，称为向上转型(upcastiog)，自动进行类型转换。
+                - 父类的引用只能调用子类覆盖或从父类继承的方法，无法调用子类独有（特有）的方法。
+            父类型向下转型（有点问题）：
+                - 如果父类想要调用子类特有的方法就必须将一个指向子类对象的父类引用赋给一个子类的引用，称为向下转型，此时必须进行强制类型转换（用子类对象来接收一个指向子类对象的父类引用）
     4、接口与抽象类的区别：
         (1) 接口中所有方法隐含都是抽象的。而抽象类则可以同时包含抽象和非抽象的方法
         (2) 接口中声明的变量默认都是final，而抽象类可以包含非final的变量
         (3) 接口中成员函数默认都会public。抽象类的成员函数可以是private，protected或者public
         (4) 类可以不实现抽象类和接口声明中的所有方法，这种情况下，类也必须声明为抽象的
+        (5) 其它理解：
+                接口是对动作的抽象，抽象类是对根源的抽象。
+                抽象类表示的是，对象是什么。接口表示的是，对象能做什么。
+                男人，女人，这两个类，他们的抽象类是人。说明他们都是人。
+                人可以吃东西，狗也可以吃东西，你可以把“吃东西”定义成一个接口，然后让实现类去实现它。
+                一个类只能继承一个类(抽象类)(类没有多继承，正如人不可能同时是生物和非生物。
+                一个类可以实现多个接口(吃饭接口、走路接口)
+                1.接口是特殊的抽象类，接口中只能定义常量和抽象方法，而抽象方法没有此限制。
+                2.接口定义方法，不能有方法体即不能自主实现方法，而抽象类定义抽象方法时可以实现部分方法（就有可能是个半成品，所以不能直接创建出实例）。
+                3.抽象类和接口都不能直接创建对象，所以可以避免半成品的抽象类被创建为对象，造成程序出错。
+                4.当你关注一个事物的本质的时候，用抽象类；当你关注一个操作的时候，用接口
+                注意：
+                    - 定义抽象类的代价较高，抽象里也必须编写出所有子类的所有共性。
+                      而类又不能多继承，一个类若继承了一个抽象类，不能再继承别的类，也就不能再扩展其属性和方法，使用起来不灵活，设计难度较高。
+                    - 对于接口，虽然在功能上会弱化许多，但是它只是针对动作的描述，而一个类可同时实现多个接口，这样扩展其功能属性显得尤为灵活，设计难度较低。
     5、什么时候用接口，什么时候用抽象类：
+        如果是考虑一类事物或者一种事物的特征、行为，比如会飞的会跑的，一般定义成接口
+        如果考虑的是一个事物，但是没有一个具体概念，比如交通工具定义为抽象类
     6、jdk与jre区别是什么？
         java开发工具包（jdk）是完整的java软件开发包，包含了jre，编译器和其他工具（比如：javadoc，java调试器），可以让开发者开发，编译，执行java应用程序
         java运行时环境（jre）是将要执行的java程序的java虚拟机，同时也包含了执行applet需要的浏览器插件。
     7、Object类中的相关方法
-        (1) ==      ：比较两个变量是否指向同一个对象（比较引用）
-        (2) equals  ：比较两个对象的内容是否相等，需要用重写后的equals（若不重写则为 == ），equals一般是给用户来调用的，返回值是true/false
-        (3) hashCode：计算出对象的特征值，返回值是int值，hashCode一般不是给用户直接调用的
-        (4) equals 与 hashCode相关：
-            * 一般来说重写了equals方法后也要重写hashCode方法，除非这个类不需要使用到类似HashSet这样的集合来存放数据
+        (1) ==         ：比较两个变量是否指向同一个对象（比较引用）
+        (2) equals()   ：比较两个对象的内容是否相等，需要用重写后的equals（若不重写则为 == ），equals一般是给用户来调用的，返回值是true/false
+        (3) hashCode() ：计算出对象的特征值，返回值是int值，hashCode一般不是给用户直接调用的
+        (4) equals() 与 hashCode()相关内容：
+            * 一般来说重写了equals方法后也要重写hashCode方法，除非这个类不需要使用到类似HashMap、HashSet等集合来存放数据
             * 所有参与计算 hashCode() 返回值的关键属性，都应该用于作为 equals() 比较的标准（尽可能的使equals比较不相同时，hashCode也不相同）
-            * equals相同那么hashCode可相同、可不同
-            * equals不相同那么hashCode一定不能相同
-            * 如果hashCode相同会有什么问题？
-
+            * equals相同那么hashCode可相同、可不同（hashCode不相同会导致使用到hash算法的集合会将元素）
+            * equals不相同那么hashCode一定不能相同（hashCode相同会导致使用到hash算法的集合会将元素存入同一个位置，影响查询效果）
+        (5) 重写equals()方法 和 hashCode()方法
+                java建议子类重写equals，实现按照“业务逻辑”规则比较对象是否相等!
+                class Card {
+                    int suit; // 花色
+                    int rank; // 点数
+                    public Card (int suit, int rank) {
+                        this.suit = suit;
+                        this.rank = rank;
+                    }
+                    public boolean equals(Object obj) {
+                        if (obj==null) { return false; }
+                        if (this==obj) { return true; }
+                        if (obj instanceof Card) {
+                            Card other = (Card) obj;
+                            // 实现了业务逻辑层面的相等
+                            return other.suit==this.suit && other.rank==this.rank;
+                        }
+                        return false;
+                    }
+                }
         (15) equals 与 hashCode的重要性体现在什么地方？
-            * hashMap通过equals和hashCode确定键值对索引
+            * HashMap是通过equals和hashCode确定键值对索引
 
     8、java集合类相关框架：
         Collections：操作集合的工具类
@@ -35,29 +79,42 @@ java基础：
                 介绍：有序可重复集（List extends Collection）
                 实现类：
                     (1) ArrayList
+                        介绍：规模动态变化的，可改变大小的数组
                         优点：底层数据结构是数组，查询快，增删慢
                         缺点：线程不安全，效率高
                     (2) Vector
                         优点：底层数据结构是数组，查询快，增删慢
                         缺点：线程安全，效率低
                     (3) LinkedList
+                        介绍：可以通过修改链表的指针（这里指引用）来进行元素的增删
                         优点：底层数据结构是双向链表实现，查询慢，增删快
                         缺点：线程不安全，效率高
                     (4) ArrayList、Vector、LinkedList的异同点？
+                        * ArrayList 和 Vector对比
+                            - ArrayList是非线程安全的，Vector是线程安全的
+                            - 扩容策略不一样：
+                                ArrayList被第一次创建的时候，会有一个初始大小DEFAULT_CAPACITY=10; 随着元素的不断增加，当ArrayList认为容量不够的时候就会进行扩容，增长原来的50%。
+                                Vector缺省情况下自动增长原来一倍的数组长度
+                        * ArrayList 和 LinkedList对比
+                            - ArrayList底层是数组，LinkedList底层是双向链表实现（它们的主要区别）
+                            - ArrayList查询和修改元素的速度较快，LinkedList删除和增加元素较快
+                            - 它们都是非线程安全的
             Set：
                 介绍：
-                    无序不可重复集（元素无放入顺序，元素不可重复，重复元素被会覆盖掉）元素虽然无放入顺序，但是元素在Set中的位置是由该元素的HashCode决定的，其位置其实是固定的，加入Set的Object必须定义equals()方法，另外List支持for循环，也就是通过下标来遍历，也可以用迭代器，但是Set只能用迭代器，因为它是无序的，无法用下标来取得想要的值。
+                    无序不可重复集（元素无放入顺序，元素不可重复，重复元素被会覆盖掉），元素虽然无放入顺序，但是元素在Set中的位置是由该元素的HashCode决定的，其位置其实是固定的。
+                    加入Set的Object必须定义equals()方法，另外List支持for循环，也就是通过下标来遍历，也可以用迭代器，但是Set只能用迭代器，因为它是无序的，无法用下标来取得想要的值。
                 实现类：
                     (1) HashSet
-                        底层数据结构是哈希表（无序，唯一）
-                        如何来保证元素唯一性？
-                            - HashSet虽然是通过equals() 和 hashCode()来判断两个元素是否相等，但只能保证HashSet中不会出现equals和hashCode都相等的元素：
-                            - 1、equals相等、hashCode相等     --- 相同元素（不能存入）
-                            - 2、equals不相等、hashCode不相等  --- 不同元素（完美存入）
-                            - 3、equals相等、hashCode不相等    --- 不同元素（可存入）
-                                那么这两个元素会被HashSet当作两个不同的元素存入HashSet中不同的位置，与设计HashSet的初衷不符（元素不重复））----------- 会报错吗？
-                            - 4、equals不相等、hashCode相等    --- 不同元素（可存入）
-                                (HashSet会将这两个元素保存在同一个位置，并将超过一个的元素以链表方式保存，这将影响HashSet的效率)
+                            底层数据结构是哈希表（无序，唯一）
+                            如何来保证元素唯一性？
+                                * HashSet是通过equals()来判断两个元素是否相等并通过hashCode()来确定存储的空间：
+                                  - 1、equals相等、hashCode相等     --- 相同元素（不能存入）
+                                  - 2、equals不相等、hashCode不相等  --- 不同元素（完美存入）
+                                  - 3、equals相等、hashCode不相等    --- 不同元素（可存入）
+                                      那么这两个元素会被HashSet当作两个不同的元素存入HashSet中不同的位置，与设计HashSet的初衷不符（元素不重复）
+                                  - 4、equals不相等、hashCode相等    --- 不同元素（可存入）
+                                      (HashSet会将这两个元素保存在同一个位置，并将超过一个的元素以链表方式保存，这将影响HashSet的效率)
+                                * 获取元素只能采用迭代器
                     (2) LinkedHashSet
                             底层数据结构是链表和哈希表（FIFO插入有序，唯一）
                                 - 由链表保证元素有序
@@ -153,7 +210,7 @@ java基础：
                     QQ分组：
                         Key            Value
                         “我的好友”       List
-						“我的家人”       List
+                        “我的家人”       List
                           ...           ...
             实现类：
                 (1) HashMap
@@ -163,10 +220,10 @@ java基础：
                             2、方法不是同步的（线程不安全的、效率高）
                             3、允许null值（key和value都允许）
                             4、父类：AbstractMap
-                        子类：LinkedHashMap
                         工作原理：
                             HashMap是以键值对的形式存储。HashMap需要一个hash算法，它使用hashCode和equals方法向HashMap中添加元素和检索元素。
                             当调用put时，HashMap会获取key的hashCode值并通过hash算法来确定将要存储的空间（bucket）  要检索的空间，然后把键值对存储在集合中合适的索引上。如果key已经存在，value会被更新成新值。hashMap的一些重要的特性是它的容量，负载因子和扩容极限
+                        子类：LinkedHashMap
                 (2) Hashtable
                         原理：
                         介绍：
@@ -180,8 +237,11 @@ java基础：
                         TreeMap implements NavigableMap extends SortedMap extends Map
             其它：
                 (1) 什么时候使用Linkedhashmap、Concurrenthashmap、Weakhashmap
-				
+                
     9、相关数据结构
+        数组
+        链表
+        二叉树
 
     10、java的IO
 
@@ -195,15 +255,79 @@ java基础：
 
 java多线程：
     1、实现线程的方式有：
+        (1) 继承Thread类，重写run()方法，启动线程start()方法
+        (2) 实现Runnable接口，实现run()方法，new Thread(new Runnable(){...}).start();
+        (3) 实现Callable接口，重写call()方法，返回值是泛型，通过FutureTask包裹一层后再作为参数传入new Thread(ft).start();
+            Account account = new Account("111", "Kevin", true);
+            CreateThreadImplementsCallable call1 = new CreateThreadImplementsCallable();
+            call1.setAccount(account);
+            FutureTask<Account> ft = new FutureTask<Account>(call1);
+            Thread t1 = new Thread(ft);
+            t1.start();
+            // 调用ft.get()获取线程返回值
+            Account result = ft.get();
+        (4) 通过线程池
     其他：
-        (1) 死锁
-            死锁是值多个线程因资源竞争而造成的一种僵局，若无外力作用，这些线程都无法向前推进。产生死锁的4个必要条件
-            1.互斥条件
-            2.不剥夺条件
-            3.请求和保持条件
-            4.循环等待
-        (2) 
-
+        (1) 死锁：
+                概念：多个并发线程因争夺资源而产生相互等待的现象。
+                原理：当一组线程中的每个线程都在等待某个事件发生，而只有这组线程中的其它线程才能触发该事件，这就称这组线程发生了死锁。
+                本质原因：
+                    1）、系统资源有限。
+                    2）、进程推进顺序不合理。
+                举例：
+                    public static void main(String[] args) {
+                        Object A = new Object();
+                        Object B = new Object();
+                        Object C = new Object();
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                synchronized (A) {
+                                    System.out.println("t1 get lock A ");
+                                    try {
+                                        Thread.sleep(2000);
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();
+                                    }
+                                    synchronized (B) {
+                                        System.out.println("t1 get lock B");
+                                    }
+                                }
+                            }
+                        }, "t1").start();
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                synchronized (B) {
+                                    System.out.println("t2 get lock B ");
+                                    try {
+                                        Thread.sleep(1000);
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();
+                                    }
+                                    synchronized (C) {
+                                        System.out.println("t2 get lock C");
+                                    }
+                                }
+                            }
+                        }, "t2").start();
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                synchronized (C) {
+                                    System.out.println("t3 get lock C ");
+                                    try {
+                                        Thread.sleep(1000);
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();
+                                    }
+                                    synchronized (A) {
+                                        System.out.println("t3 get lock A");
+                                    }
+                                }
+                            }
+                        }, "t3").start();
+                    }
     1、join
     2、wait
     3、sleep
