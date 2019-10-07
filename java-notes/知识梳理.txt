@@ -331,35 +331,35 @@ java基础：
 
 java多线程：
     1、java线程生命周期有哪些
-		(1) New          （初始化状态）
-		    当程序使用new关键字创建了一个线程之后，该线程就处于初始化状态，此时的线程情况如下：
-		      1）此时JVM为其分配内存，并初始化其成员变量的值
-		      2）此时线程对象没有表现出任何线程的动态特征，程序也不会执行线程的线程执行体
-		(2) Runnable     （可运行/运行状态）
-		    当线程对象调用了start()方法之后，该线程处于 就绪状态。此时的线程情况如下：
-		      1）此时JVM会为其创建方法去调用栈和程序计数器
-		      2）该状态的线程一直处于 线程就绪队列（尽管是采用队列形式，事实上把它称为可运行池而不是可运行队列。因为CPU的调度不一定是按照先进先出的顺序来调度的），线程并没有开始运行
-		      3）此时线程等待系统为其分配CPU时间片，并不是说执行了start()方法就立即执行
-		(3) Blocked      （阻塞状态）
-		    只有一种情况会导致线程阻塞，就是synchronized，我们知道被synchronized修饰的方法或者代码块同一时刻只能有一个线程执行，
-		    而其他竞争锁的线程就从Runnable到了Blocked状态，当某个线程竞争到锁了它就变成了Runnable状态。
-		(4) Waiting      （无时间限制的等待状态）
-		    有三种情况会使得Runnable状态到Waiting状态，一旦唤醒后就会回到Runnable状态
-		      1）调用无参的Object.wait()方法。等到notifyAll()或者notify()唤醒就会回到Runnable状态。
-		      2）调用无参的Thread.join()方法。也就是比如你在主线程里面建立了一个线程t1，调用t1.join()，那么你的主线程需要等t1执行完了才会继续执行，这时你的主线程就是Waiting状态。
-		      3）调用LockSupport.park()方法。LockSupport是Java6引入的一个工具类，Java并发包中的锁都是基于它实现的，再调用LockSupport.unpark(Thread thread)，就会回到Runnable状态。
-		(5) Timed_Waiting（有时间限制的等待状态）
-		    有五种情况会使得Runnable状态到Timed_Waiting状态，一旦唤醒或超时后就会回到Runnable状态
-		      1）Object.wait(long timeout)，注意 Object.wait(long timeout, int nanos) ---（当nanos > 0，timeout++）
-			  2）Thread.join(long millis)，注意 Thread.join(long millis, int nanos) ---（当nanos >= 500000 || (nanos != 0 && millis == 0)，millis++）
-			     (******)Thread.join(long millis)底层是通过调用native方法：wait(long timeout)来实现join的功能的
-			  3）Thread.sleep(long millis)，注意 Thread.sleep(long millis, int nanos)内部调用的其实也是Thread.sleep(long millis)
-			  4）LockSupport.parkNanos(Object blocked, long deadline)
-			  5）LockSupport.parkUntil(long deadline)
-		(6) Terminated   （终止状态）
-		      1）线程正常run结束之后或者run中途出现异常了就变成终止状态
-		      2）Thread.stop()是让线程终止的，但是此方法已经被废弃（@Deprecated）了，不推荐使用。
-		         因为比如你这个线程得到了锁，你stop了之后这个锁也随着没了，其它线程就都拿不到这个锁了！这不玩完了么！所以推荐使用interrupt()方法。
+        (1) New          （初始化状态）
+            当程序使用new关键字创建了一个线程之后，该线程就处于初始化状态，此时的线程情况如下：
+              1）此时JVM为其分配内存，并初始化其成员变量的值
+              2）此时线程对象没有表现出任何线程的动态特征，程序也不会执行线程的线程执行体
+        (2) Runnable     （可运行/运行状态）
+            当线程对象调用了start()方法之后，该线程处于 就绪状态。此时的线程情况如下：
+              1）此时JVM会为其创建方法去调用栈和程序计数器
+              2）该状态的线程一直处于 线程就绪队列（尽管是采用队列形式，事实上把它称为可运行池而不是可运行队列。因为CPU的调度不一定是按照先进先出的顺序来调度的），线程并没有开始运行
+              3）此时线程等待系统为其分配CPU时间片，并不是说执行了start()方法就立即执行
+        (3) Blocked      （阻塞状态）
+            只有一种情况会导致线程阻塞，就是synchronized，我们知道被synchronized修饰的方法或者代码块同一时刻只能有一个线程执行，
+            而其他竞争锁的线程就从Runnable到了Blocked状态，当某个线程竞争到锁了它就变成了Runnable状态。
+        (4) Waiting      （无时间限制的等待状态）
+            有三种情况会使得Runnable状态到Waiting状态，一旦唤醒后就会回到Runnable状态
+              1）调用无参的Object.wait()方法。等到notifyAll()或者notify()唤醒就会回到Runnable状态。
+              2）调用无参的Thread.join()方法。也就是比如你在主线程里面建立了一个线程t1，调用t1.join()，那么你的主线程需要等t1执行完了才会继续执行，这时你的主线程就是Waiting状态。
+              3）调用LockSupport.park()方法。LockSupport是Java6引入的一个工具类，Java并发包中的锁都是基于它实现的，再调用LockSupport.unpark(Thread thread)，就会回到Runnable状态。
+        (5) Timed_Waiting（有时间限制的等待状态）
+            有五种情况会使得Runnable状态到Timed_Waiting状态，一旦唤醒或超时后就会回到Runnable状态
+              1）Object.wait(long timeout)，注意 Object.wait(long timeout, int nanos) ---（当nanos > 0，timeout++）
+              2）Thread.join(long millis)，注意 Thread.join(long millis, int nanos) ---（当nanos >= 500000 || (nanos != 0 && millis == 0)，millis++）
+                 (******)Thread.join(long millis)底层是通过调用native方法：wait(long timeout)来实现join的功能的
+              3）Thread.sleep(long millis)，注意 Thread.sleep(long millis, int nanos)内部调用的其实也是Thread.sleep(long millis)
+              4）LockSupport.parkNanos(Object blocked, long deadline)
+              5）LockSupport.parkUntil(long deadline)
+        (6) Terminated   （终止状态）
+              1）线程正常run结束之后或者run中途出现异常了就变成终止状态
+              2）Thread.stop()是让线程终止的，但是此方法已经被废弃（@Deprecated）了，不推荐使用。
+                 因为比如你这个线程得到了锁，你stop了之后这个锁也随着没了，其它线程就都拿不到这个锁了！这不玩完了么！所以推荐使用interrupt()方法。
     2、实现线程的方式有哪些
         (1) 继承Thread类，重写run()方法，启动线程start()方法，（ public class Thread implements Runnable {...} ）
         (2) 实现Runnable接口，重写run()方法，new Thread(new Runnable(){...}).start();
@@ -384,7 +384,7 @@ java多线程：
                         new Thread(futureTask, "t1").start();
                         // 线程池方式创建线程：
                         // ExecutorService threadPool = Executors.newSingleThreadExecutor();
-        				// Future<String> futureTask = threadPool.submit(new CallableTest());
+                        // Future<String> futureTask = threadPool.submit(new CallableTest());
                         try {
                             // 等待t1线程结束，并获取返回结果（等待期间当前main线程会阻塞，直接call方法结束并返回结果）
                             System.out.println( futureTask.get() );
