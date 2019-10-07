@@ -307,7 +307,7 @@ java基础：
             1）单向链表
             2）双向链表
             其它：
-            	1）为何链表的检索会较慢？
+                1）为何链表的检索会较慢？
         3、二叉树
             1）排序二叉树
             2）红黑二叉树
@@ -319,8 +319,6 @@ java基础：
                     - 如果一个结点是红的，则它两个子节点都是黑的。也就是说在一条路径上不能出现相邻的两个红色结点
                     - 从任一节点到其每个叶子的所有路径都包含相同数目的黑色节点
                 对于红黑树而言它主要包括三大基本操作：左旋、右旋、着色。
-        4、
-
     10、java的IO
 
     20、其它
@@ -332,24 +330,84 @@ java基础：
             java中不可以覆盖private方法。因为private修饰的变量和方法只能在当前类中使用，如果是其他类继承当前类，继承类中是不能访问到private变量和方法的
 
 java多线程：
-    1、实现线程的方式有：
-        (1) 继承Thread类，重写run()方法，启动线程start()方法
-        (2) 实现Runnable接口，实现run()方法，new Thread(new Runnable(){...}).start();
+    1、java线程生命周期有哪些
+		(1) New          （初始化状态）
+		    当程序使用new关键字创建了一个线程之后，该线程就处于初始化状态，此时的线程情况如下：
+		      1）此时JVM为其分配内存，并初始化其成员变量的值
+		      2）此时线程对象没有表现出任何线程的动态特征，程序也不会执行线程的线程执行体
+		(2) Runnable     （可运行/运行状态）
+		    当线程对象调用了start()方法之后，该线程处于 就绪状态。此时的线程情况如下：
+		      1）此时JVM会为其创建方法去调用栈和程序计数器
+		      2）该状态的线程一直处于 线程就绪队列（尽管是采用队列形式，事实上把它称为可运行池而不是可运行队列。因为CPU的调度不一定是按照先进先出的顺序来调度的），线程并没有开始运行
+		      3）此时线程等待系统为其分配CPU时间片，并不是说执行了start()方法就立即执行
+		(3) Blocked      （阻塞状态）
+		    只有一种情况会导致线程阻塞，就是synchronized，我们知道被synchronized修饰的方法或者代码块同一时刻只能有一个线程执行，
+		    而其他竞争锁的线程就从Runnable到了Blocked状态，当某个线程竞争到锁了它就变成了Runnable状态。
+		(4) Waiting      （无时间限制的等待状态）
+		    有三种情况会使得Runnable状态到Waiting状态，一旦唤醒后就会回到Runnable状态
+		      1）调用无参的Object.wait()方法。等到notifyAll()或者notify()唤醒就会回到Runnable状态。
+		      2）调用无参的Thread.join()方法。也就是比如你在主线程里面建立了一个线程t1，调用t1.join()，那么你的主线程需要等t1执行完了才会继续执行，这时你的主线程就是Waiting状态。
+		      3）调用LockSupport.park()方法。LockSupport是Java6引入的一个工具类，Java并发包中的锁都是基于它实现的，再调用LockSupport.unpark(Thread thread)，就会回到Runnable状态。
+		(5) Timed_Waiting（有时间限制的等待状态）
+		    有五种情况会使得Runnable状态到Timed_Waiting状态，一旦唤醒或超时后就会回到Runnable状态
+		      1）Object.wait(long timeout)，注意 Object.wait(long timeout, int nanos) ---（当nanos > 0，timeout++）
+			  2）Thread.join(long millis)，注意 Thread.join(long millis, int nanos) ---（当nanos >= 500000 || (nanos != 0 && millis == 0)，millis++）
+			     (******)Thread.join(long millis)底层是通过调用native方法：wait(long timeout)来实现join的功能的
+			  3）Thread.sleep(long millis)，注意 Thread.sleep(long millis, int nanos)内部调用的其实也是Thread.sleep(long millis)
+			  4）LockSupport.parkNanos(Object blocked, long deadline)
+			  5）LockSupport.parkUntil(long deadline)
+		(6) Terminated   （终止状态）
+		      1）线程正常run结束之后或者run中途出现异常了就变成终止状态
+		      2）Thread.stop()是让线程终止的，但是此方法已经被废弃（@Deprecated）了，不推荐使用。
+		         因为比如你这个线程得到了锁，你stop了之后这个锁也随着没了，其它线程就都拿不到这个锁了！这不玩完了么！所以推荐使用interrupt()方法。
+    2、实现线程的方式有哪些
+        (1) 继承Thread类，重写run()方法，启动线程start()方法，（ public class Thread implements Runnable {...} ）
+        (2) 实现Runnable接口，重写run()方法，new Thread(new Runnable(){...}).start();
         (3) 实现Callable<泛型>接口，重写call()方法，返回值是泛型，通过FutureTask包裹一层后再作为参数传入new Thread(ft).start();
             优点：实现Callable有返回值（可以拿到线程运行后返回值）
             特点：
                 支持Future模式（可以达到一个异步阻塞的查询结果的效果）：数据是异步提交到后台，线程后台去计算，也可以主动去获取结果( ft.get() )，若线程没执行完则会阻塞直到线程执行完。
-                “数据提交给你，你先算，我需要的时候再问你要，我要的时候你没算完，那我就等着（阻塞）”，需要借助FutureTask类来实现线程的启动，异步阻塞方式
+                “数据提交给你，你先算，我需要的时候再问你要，我要的时候你没算完，那我就等着（阻塞）”，需要借助FutureTask类来实现线程的启动。
             举例：
-                Account account = new Account("111", "Kevin", true);
-                CreateThreadImplementsCallable call1 = new CreateThreadImplementsCallable();
-                call1.setAccount(account);
-                FutureTask<Account> ft = new FutureTask<Account>(call1);
-                Thread t1 = new Thread(ft);
-                t1.start();
-                // 调用ft.get()获取线程返回值，这里需要捕获异常（略）
-                Account result = ft.get();
+                public class CallableAndFuture {
+                    public static class CallableTest implements Callable<String> {
+                        @Override
+                        public String call() throws Exception {
+                            System.out.println(Thread.currentThread().getName()+" >> start ...");
+                            Thread.sleep(5000);
+                            System.out.println(Thread.currentThread().getName()+" >> run over !");
+                            return "Hello World";
+                        }
+                    }
+                    public static void main(String[] args) {
+                        FutureTask futureTask = new FutureTask(new CallableTest());
+                        new Thread(futureTask, "t1").start();
+                        // 线程池方式创建线程：
+                        // ExecutorService threadPool = Executors.newSingleThreadExecutor();
+        				// Future<String> futureTask = threadPool.submit(new CallableTest());
+                        try {
+                            // 等待t1线程结束，并获取返回结果（等待期间当前main线程会阻塞，直接call方法结束并返回结果）
+                            System.out.println( futureTask.get() );
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        } catch (ExecutionException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
         (4) 通过线程池
+        (5) Callable 与 Runnable接口的区别
+             1）Callable可以在任务结束后提供一个返回值，Runnable无法提供这个功能。
+             2）Callable中的call()方法可以抛出异常，而Runnable的run()方法不能抛出异常。
+             3）使用Callable方式可以拿到一个Future接口的实现类对象，此对象表示异步计算的结果，它提供了检查计算是否完成的方法。
+                由于线程属于异步计算模型，因此无法从别的线程中得到方法的返回值，在这种情况下，就可以使用此对象来监视目标线程调用call()方法的情况，
+                当调用Future的get()方法以获取结果时，当前线程就会阻塞，直到call()方法执行结果并返回结果。
+    3、多线程同步的实现方法有哪些
+        (1) synchronized 关键字
+        (2) wait()方法与notify()方法
+        (3) Lock
+    4、sleep()方法与wait()方法有什么区别
+
     2、join：
     3、wait：
     4、sleep：
