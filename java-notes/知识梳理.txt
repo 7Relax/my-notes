@@ -47,8 +47,11 @@ java基础：
         (4) equals() 与 hashCode()相关内容：
             * 一般来说重写了equals方法后也要重写hashCode方法，除非这个类不需要使用到类似HashMap、HashSet等集合来存放数据
             * 所有参与计算 hashCode() 返回值的关键属性，都应该用于作为 equals() 比较的标准（尽可能的使equals比较不相同时，hashCode也不相同）
-            * equals相同那么hashCode可相同、可不同（hashCode不相同会导致使用到hash算法的集合会将元素）
+            * equals相同那么hashCode可相同、可不同（hashCode不相同会导致使用到hash算法的集合会将两个相同元素放入不同的位置）
             * equals不相同那么hashCode一定不能相同（hashCode相同会导致使用到hash算法的集合会将元素存入同一个位置，影响查询效果）
+            * equals相同hashCode值必须相同；equals不相同hashCode应尽量不相同；
+            * equals不相同-------代表：不是同一个对象（“不是同一个人”）
+            * 若很多对象它们的equals不相同但hashCode确相同，这会导致“一个屋子里有许多人”，大大降低检索效率（一个空间里本应只存一个keyValue对）
         (5) 重写equals()方法 和 hashCode()方法
                 java建议子类重写equals，实现按照“业务逻辑”规则比较对象是否相等!
                 class Card {
@@ -58,15 +61,20 @@ java基础：
                         this.suit = suit;
                         this.rank = rank;
                     }
+                    @Override
                     public boolean equals(Object obj) {
-                        if (obj==null) { return false; }
-                        if (this==obj) { return true; }
+                        if (obj == null) { return false; }
+                        if (this == obj) { return true; }
                         if (obj instanceof Card) {
-                            Card other = (Card) obj;
+                            Card card = (Card) obj;
                             // 实现了业务逻辑层面的相等
-                            return other.suit==this.suit && other.rank==this.rank;
+                            return this.suit==card.suit && this.rank==card.rank;
                         }
                         return false;
+                    }
+                    @Override
+                    public int hashCode() {
+                        return Objects.hash(suit, rank);
                     }
                 }
         (15) equals 与 hashCode的重要性体现在什么地方？
@@ -193,7 +201,7 @@ java基础：
                 (3) 如果你知道是Collection集合，但是不知道使用谁，就用ArrayList（这个要看情况啦）
         Map
             介绍：
-                * Map接口定义的集合又称查找表（表格），用于存储 "Key - Value" 键值对。
+                * Map接口定义的集合又称查找表（二维表格），用于存储 "Key - Value" 键值对。
                 * Key可以看成是Value的索引，作为Key的对象在集合中不可以重复（即Key不可以重复）
                 * 根据内部数据结构的不同，Map接口有多种实现类，其中常用的有内部为Hash表实现的HashMap和内部为排序二叉数实现的TreeMap
                 * Map（查找表）：内容可以看作是一个多行两列的表格。
@@ -212,24 +220,47 @@ java基础：
                         “我的好友”       List
                         “我的家人”       List
                           ...           ...
+                常用方法：
+                    1、put --> 用于向Map中插入元素
+                        当给定的key已在Map中存在，则是替换Value的操作（key不会替换），则put方法的返回值为被替换的Value
+                        若给定的key不在Map中，则put方法的返回值为null
+                    2、get --> 获取map中Key对应的Value值
+                    3、containsKey --> 查看map中是否包含给定的Key，返回值为：boolean
             实现类：
                 (1) HashMap
                         原理：底层是根据Hash表实现
                         介绍：
-                            1、无序
-                            2、方法不是同步的（线程不安全的、效率高）
-                            3、允许null值（key和value都允许）
-                            4、父类：AbstractMap
-                        工作原理：
-                            HashMap是以键值对的形式存储。HashMap需要一个hash算法，它使用hashCode和equals方法向HashMap中添加元素和检索元素。
-                            当调用put时，HashMap会获取key的hashCode值并通过hash算法来确定将要存储的空间（bucket）  要检索的空间，然后把键值对存储在集合中合适的索引上。如果key已经存在，value会被更新成新值。hashMap的一些重要的特性是它的容量，负载因子和扩容极限
+                            1）无序
+                            2）方法不是同步的（线程不安全的、效率高）
+                            3）允许键或值为null
+                            4）父类：AbstractMap
+                        工作原理及注意事项：
+                            1）获取key的hashCode值；
+                            2）通过hash算法确定要存储到哪个空间（bucket）
+                            3）通过hash算法确定要检索的空间（bucket）
+                            4）通过equals方法依次和bucket中的key比较
+                            5）元素（key-value形式）以链表的方式存入对应的bucket
+                            6）鉴于HashMap的存储原理，存入HashMap的Key必须妥善的重写hashCode方法
+                            7）当调用put方法时，HashMap会获取key的hashCode值并通过hash算法来确定要存储到的空间（bucket），再通过equals方法依次和bucket中的key比较（一般情况下bucket中只有一个元素），如果key的比较结果为true，则替换value（key不会替换），如果key的比较结果为false，则插入元素（多个元素之间是以链表形式连接）。
+                            8）当调用get方法时，HashMap会获取key的hashCode值并通过hash算法来确定需要检索的空间（bucket），再通过equals方法依次和bucket中的key比较，如果key的比较结果为true，则返回key所对应的value值。
+                        性能优化：
+                            HashMap（散列表）会影响性能的几个因素（HashMap优化）：
+                            1）容量：散列数组的大小，当我们new一个HashMap的时候，它内部会创建一个散列数组，其大小是16（DEFAULT_INITIAL_CAPACITY = 1 << 4，可设置，不建议改）
+                            2）size：HashMap中一共有多少个元素（多少组键值对）
+                            3）加载因子（static final float DEFAULT_LOAD_FACTOR=0.75f，默认值是0.75，这个是根据科学的测试统计出来的一个比较平衡的值，一般情况不建议改）
+                                eg：
+                                一个宾馆有16间房，若宾馆里只住1个人和宾馆里住满了人当然是只住1个人时的检索效率高。
+                                size与容量的比值就是加载因子，即住了多少个人和宾馆里有多少间房的比值为加载因子。
+                                HashMap经过反复的科学测试，最终统计出来当加载因子为0.75时，检索效率与资源消耗情况最合理最优。
+                                若当size（put动作）为13的时候（大于4分之3），散列数组就会扩容，就是永远保证留有4分之一是空的。
+                                若加载因子设置的过小，那就会频繁扩容会影响性能。
                         子类：LinkedHashMap
                 (2) Hashtable
                         原理：
                         介绍：
                             1、无序
                             2、大部分方法是同步的（线程安全的、效率低）
-                            3、不允许键或值null值
+                            3、不允许键或值为null
                             4、父类：Dictionary
                 (3) TreeMap
                         原理：底层是根据：排序二叉树实现
@@ -239,9 +270,11 @@ java基础：
                 (1) 什么时候使用Linkedhashmap、Concurrenthashmap、Weakhashmap
                 
     9、相关数据结构
-        数组
-        链表
-        二叉树
+        1、数组
+        2、链表
+            为何链表的检索会较慢？
+        3、二叉树
+        4、红黑二叉树
 
     10、java的IO
 
@@ -257,23 +290,46 @@ java多线程：
     1、实现线程的方式有：
         (1) 继承Thread类，重写run()方法，启动线程start()方法
         (2) 实现Runnable接口，实现run()方法，new Thread(new Runnable(){...}).start();
-        (3) 实现Callable接口，重写call()方法，返回值是泛型，通过FutureTask包裹一层后再作为参数传入new Thread(ft).start();
-            Account account = new Account("111", "Kevin", true);
-            CreateThreadImplementsCallable call1 = new CreateThreadImplementsCallable();
-            call1.setAccount(account);
-            FutureTask<Account> ft = new FutureTask<Account>(call1);
-            Thread t1 = new Thread(ft);
-            t1.start();
-            // 调用ft.get()获取线程返回值
-            Account result = ft.get();
+        (3) 实现Callable<泛型>接口，重写call()方法，返回值是泛型，通过FutureTask包裹一层后再作为参数传入new Thread(ft).start();
+            优点：实现Callable有返回值（可以拿到线程运行后返回值）
+            特点：
+                支持Future模式（可以达到一个异步阻塞的查询结果的效果）：数据是异步提交到后台，线程后台去计算，也可以主动去获取结果( ft.get() )，若线程没执行完则会阻塞直到线程执行完。
+                “数据提交给你，你先算，我需要的时候再问你要，我要的时候你没算完，那我就等着（阻塞）”，需要借助FutureTask类来实现线程的启动，异步阻塞方式
+            举例：
+                Account account = new Account("111", "Kevin", true);
+                CreateThreadImplementsCallable call1 = new CreateThreadImplementsCallable();
+                call1.setAccount(account);
+                FutureTask<Account> ft = new FutureTask<Account>(call1);
+                Thread t1 = new Thread(ft);
+                t1.start();
+                // 调用ft.get()获取线程返回值，这里需要捕获异常（略）
+                Account result = ft.get();
         (4) 通过线程池
+    2、join：
+    3、wait：
+    4、sleep：
+    5、yield：
+    6、notify：方法的作用是唤醒某个线程，但不能唤醒某个具体的线程
+    7、notifyAll：唤醒所有线程并允许他们争夺锁确保了至少有一个线程能继续运行
+    8、为什么wait, notify 和 notifyAll这些方法不在thread类里面？
+        一个很明显的原因是JAVA提供的锁是对象级的而不是线程级的，每个对象都有锁。
+        wait，notify和notifyAll都是锁级别的操作，所以把他们定义在Object类中因为锁属于对象
+    9、interrupted 和 isInterrupted方法的区别？
+    10、volatile
     其他：
         (1) 死锁：
                 概念：多个并发线程因争夺资源而产生相互等待的现象。
                 原理：当一组线程中的每个线程都在等待某个事件发生，而只有这组线程中的其它线程才能触发该事件，这就称这组线程发生了死锁。
                 本质原因：
-                    1）、系统资源有限。
-                    2）、进程推进顺序不合理。
+                    1）系统资源有限。
+                    2）线程推进顺序不合理。
+                死锁产生的4个必要条件：
+                    1）互斥：某种资源一次只允许一个线程访问，即该资源一旦分配给某个线程，其他线程就不能再访问，直到该线程访问结束。
+                    2）占有且等待：一个线程本身占有资源（一种或多种），同时还有资源未得到满足，正在等待其他线程释放该资源。
+                    3）不可抢占：别人已经占有了某项资源，你不能因为自己也需要该资源，就去把别人的资源抢过来。
+                    4）循环等待：存在一个线程链，使得每个线程都占有下一个线程所需的至少一种资源。
+                    当以上四个条件均满足，必然会造成死锁，发生死锁的线程无法进行下去，它们所持有的资源也无法释放。
+                    这样会导致CPU的吞吐量下降。所以死锁情况是会浪费系统资源和影响计算机的使用性能。
                 举例：
                     public static void main(String[] args) {
                         Object A = new Object();
@@ -328,12 +384,6 @@ java多线程：
                             }
                         }, "t3").start();
                     }
-    1、join
-    2、wait
-    3、sleep
-    4、yield
-    5、notify
-    6、notifyAll
 
 Spring：
     1、ioc
