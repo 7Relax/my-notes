@@ -228,7 +228,7 @@ java基础：
                     3、containsKey --> 查看map中是否包含给定的Key，返回值为：boolean
             实现类：
                 (1) HashMap
-                        原理：底层是根据Hash表实现
+                        原理：基于Hash表（也称哈希数组）实现
                         介绍：
                             1）无序
                             2）方法不是同步的（线程不安全的、效率高）
@@ -246,35 +246,80 @@ java基础：
                         性能优化：
                             HashMap（散列表）会影响性能的几个因素（HashMap优化）：
                             1）容量：散列数组的大小，当我们new一个HashMap的时候，它内部会创建一个散列数组，其大小是16（DEFAULT_INITIAL_CAPACITY = 1 << 4，可设置，不建议改）
-                            2）size：HashMap中一共有多少个元素（多少组键值对）
+                            2）变量size：它记录HashMap的底层数组中已用槽的数量（多少组键值对）
                             3）加载因子（static final float DEFAULT_LOAD_FACTOR=0.75f，默认值是0.75，这个是根据科学的测试统计出来的一个比较平衡的值，一般情况不建议改）
+                            4）变量threshold[ˈθreʃhəʊld]，它是HashMap的阈值，用于判断是否需要调整HashMap的容量（threshold = 容量 * 加载因子）
                                 eg：
                                 一个宾馆有16间房，若宾馆里只住1个人和宾馆里住满了人当然是只住1个人时的检索效率高。
-                                size与容量的比值就是加载因子，即住了多少个人和宾馆里有多少间房的比值为加载因子。
                                 HashMap经过反复的科学测试，最终统计出来当加载因子为0.75时，检索效率与资源消耗情况最合理最优。
-                                若当size（put动作）为13的时候（大于4分之3），散列数组就会扩容，就是永远保证留有4分之一是空的。
+                                若当size（put动作）> threshold时，散列数组就会扩容，就是永远保证至少有4分之一是空的。
+                                若加载因子过大，对空间的利用更充分，但是查找效率会降低（链表长度会越来越长）。
                                 若加载因子设置的过小，那就会频繁扩容会影响性能。
+                                HashMap共有四个构造方法。构造方法中提到了两个很重要的参数：初始容量和加载因子。
+                        详细介绍：
+                            1）HashMap是基于哈希表实现的，每一个元素是一个key-value对，其内部通过单链表解决冲突问题，容量不足（超过了阀值）时，同样会自动增长。
+                            2）HashMap是非线程安全的，只是用于单线程环境下，多线程环境下可以采用concurrent并发包下的ConcurrentHashMap。
+                            3）HashMap 实现了Serializable接口，因此它支持序列化，实现了Cloneable接口，能被克隆。
+                            4）HashMap存数据的过程是：
+                                HashMap内部维护了一个存储数据的Entry数组，HashMap采用链表解决冲突，每一个Entry本质上是一个单向链表。
+                                当准备添加一个key-value对时，首先通过hash(key)方法计算hash值，然后通过indexFor(hash,length)求该key-value对的存储位置，计算方法是先用hash&0x7FFFFFFF后，再对length取模，这就保证每一个key-value对都能存入HashMap中，当计算出的位置相同时，由于存入位置是一个链表，则把这个key-value对插入链表头。
+                            5）HashMap中key和value都允许为null。key为null的键值对永远都放在以table[0]为头结点的链表中。
                         子类：LinkedHashMap
+                            原理：底层维护了一个双向链表，它可以实现输入的顺序和输出的顺序相同
+                            介绍：
+                                LinkedHashMap维护着一个双向循环链表。此链表定义了迭代顺序，该迭代顺序通常就是存放元素的顺序。
+                                LinkedHashMap的内部维持了一个双向链表，保存了数据的插入顺序，遍历时，先得到的数据便是先插入的，遍历速度通常情况下比HashMap慢
                 (2) Hashtable
-                        原理：
+                        原理：基于哈希表实现的，同样每个元素是一个key-value对，其内部也是通过单向链表解决冲突问题，容量不足（超过了阀值）时，同样会自动增长
                         介绍：
                             1、无序
                             2、大部分方法是同步的（线程安全的、效率低）
                             3、不允许键或值为null
                             4、父类：Dictionary
                 (3) TreeMap
-                        原理：底层是根据：排序二叉树实现
-                        介绍：有序
-                        TreeMap implements NavigableMap extends SortedMap extends Map
+                        原理：基于红黑树算法实现
+                        介绍：
+                            排序功能是其最大亮点。如果想按照自定义顺序或者自然顺序存储数据，TreeMap是一个最好的选择。
+                            TreeMap是有序的，通过Comparator接口（重写compare(T o1, T o2)方法）我们可以对TreeMap的内部排序进行精密的控制。
+                            TreeMap implements NavigableMap extends SortedMap extends Map
             其它：
-                (1) 什么时候使用Linkedhashmap、Concurrenthashmap、Weakhashmap
+                (1) Hashtable和HashMap的区别
+                    1）继承的父类不同：Hashtable继承自Dictionary类，而HashMap继承自AbstractMap类。但二者都实现了Map接口。
+                    2）线程安全性不同：Hashtable中的方法是同步的，在多线程并发的环境下，可以直接使用Hashtable，不需要自己为它的方法实现同步，但使用HashMap时就必须要自己增加同步处理。
+                    3) key和value是否允许null值：Hashtable中不允许键或值为null，而HashMap允许键或值为null
+                        - 在Hashtable中有类似put(null,null)的操作，编译是同样可以通过的，因为key和value都是Object类型，但运行时会抛出NullPointerException异常，这是JDK的规范规定的。
+                        - 在HashMap中不能由get()方法来判断HashMap中是否存在某个键，而应该用containsKey()方法来判断。
+                            -- 因为当get()方法返回null值时，可能是HashMap中没有该键，也可能是该键所对应的值为null。
+                    4）hash值不同：哈希值的使用不同，Hashtable直接使用对象的hashCode。而HashMap重新计算hash值。
+                    5）两个遍历方式的内部实现上不同：Hashtable、HashMap都使用了Iterator。而由于历史原因，Hashtable还使用了Enumeration的方式。
+                    6）内部实现使用的数组初始化和扩容方式不同：
+                        - Hashtable在不指定容量的情况下的默认容量为11，而HashMap为16，Hashtable不要求底层数组的容量一定要为2的整数次幂，而HashMap则要求一定为2的整数次幂。
+                        - Hashtable扩容时，将容量变为原来的2倍加1，而HashMap扩容时，将容量变为原来的2倍。
+                        - Hashtable和HashMap它们两个内部实现方式的数组的初始大小和扩容的方式。HashTable中hash数组默认大小是11，增加的方式是 old*2+1。
+                    7）是否提供contains方法
+                        - HashMap把Hashtable的contains方法去掉了，改成containsValue和containsKey，因为contains方法容易让人引起误解。
+                        - Hashtable则保留了contains，containsValue和containsKey三个方法，其中contains和containsValue功能相同。
+                (2) 什么时候使用LinkedHashMap、ConcurrentHashMap、WeakHashMap
                 
     9、相关数据结构
         1、数组
         2、链表
-            为何链表的检索会较慢？
+            1）单向链表
+            2）双向链表
+            其它：
+            	1）为何链表的检索会较慢？
         3、二叉树
-        4、红黑二叉树
+            1）排序二叉树
+            2）红黑二叉树
+                红黑二叉树（又称红黑树），它首先是一颗二叉树，它具有二叉树所有的特性。
+                红黑树顾名思义就是节点是红色或者黑色的平衡二叉树，它通过颜色的约束来维持着二叉树的平衡。对于一棵有效的红黑树而言我们必须增加如下规则：
+                    - 每个节点都只能是红色或者黑色
+                    - 根节点是黑色
+                    - 每个叶节点（NIL节点即空节点）是黑色的
+                    - 如果一个结点是红的，则它两个子节点都是黑的。也就是说在一条路径上不能出现相邻的两个红色结点
+                    - 从任一节点到其每个叶子的所有路径都包含相同数目的黑色节点
+                对于红黑树而言它主要包括三大基本操作：左旋、右旋、着色。
+        4、
 
     10、java的IO
 
