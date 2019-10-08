@@ -336,9 +336,9 @@ java多线程：
               1）此时JVM为其分配内存，并初始化其成员变量的值
               2）此时线程对象没有表现出任何线程的动态特征，程序也不会执行线程的线程执行体
         (2) Runnable     （可运行/运行状态）
-            当线程对象调用了start()方法之后，该线程处于 就绪状态。此时的线程情况如下：
+            当线程对象调用了start()方法之后，该线程处于就绪状态，此时的线程情况如下：
               1）此时JVM会为其创建方法去调用栈和程序计数器
-              2）该状态的线程一直处于 线程就绪队列（尽管是采用队列形式，事实上把它称为可运行池而不是可运行队列。因为CPU的调度不一定是按照先进先出的顺序来调度的），线程并没有开始运行
+              2）该状态的线程处于线程就绪队列中（尽管是采用队列形式，事实上把它称为可运行池而不是可运行队列。因为CPU的调度不一定是按照先进先出的顺序来调度的），线程并没有开始运行
               3）此时线程等待系统为其分配CPU时间片，并不是说执行了start()方法就立即执行
         (3) Blocked      （阻塞状态）
             只有一种情况会导致线程阻塞，就是synchronized，我们知道被synchronized修饰的方法或者代码块同一时刻只能有一个线程执行，
@@ -360,7 +360,36 @@ java多线程：
               1）线程正常run结束之后或者run中途出现异常了就变成终止状态
               2）Thread.stop()是让线程终止的，但是此方法已经被废弃（@Deprecated）了，不推荐使用。
                  因为比如你这个线程得到了锁，你stop了之后这个锁也随着没了，其它线程就都拿不到这个锁了！这不玩完了么！所以推荐使用interrupt()方法。
-    2、实现线程的方式有哪些
+    2、join()：等待线程执行终止之后，继续执行本线程的内容（join不是static方法，本质是调用wait方法来实现），可以使用CountDownLatch也可以达到相同效果。
+    3、wait()：
+    	(1) wait()方法不带参：
+    	    释放锁。线程进入到无限期的等待状态，Runnable -> Waiting状态，需要其它线程调用此锁对象的notify()方法或notifyAll()方法后方可唤醒即回到Runnable状态。
+    	    使用wait()需要在synchronized里执行（ synchronized (Object) { Object.wait(); }  ）
+    	(2) wait(5000)方法带参：
+    	    在等待期间释放锁资源。线程进入到有限期的等待状态，Runnable -> Timed_Waiting状态，在等待期间需要notify()或notifyAll()唤醒或者超时后自动回到Runnable状态。
+    4、sleep(1000)：
+        不释放锁。sleep方法只有有参方法，线程进入到有限期的等待状态，Runnable -> Timed_Waiting状态。
+        有个疑问：
+            当在main线程中调用其它线程（如：t1线程）的sleep方法时，会使main线程自己进入到Timed_Waiting状态，而不清楚是否影响到t1线程。
+            查看sleep方法也没有发现是调用当前线程的，所以没懂为什么main会进入Time_Waiting状态。
+    5、yield()：
+        不释放锁。建议cpu进行下一轮调度工作，但cpu可以采纳意见也可以不采纳，若采纳意见则进入就绪状态（Runnable状态）
+    6、notify()：方法的作用是唤醒某个线程，但不能唤醒某个具体的线程。
+    7、notifyAll()：唤醒所有线程并允许它们争夺锁，确保了至少有一个线程能继续运行，这样会造成锁竞争问题。
+    8、interrupt()、interrupted()、isInterrupted()、isInterrupted()
+    9、volatile关键字
+    10、为什么wait, notify 和 notifyAll这些方法不在thread类里面？
+        一个很明显的原因是JAVA提供的锁是对象级的而不是线程级的，每个对象都有锁。
+        wait，notify和notifyAll都是锁级别的操作，所以把他们定义在Object类中因为锁属于对象
+    11、多线程同步的实现方法有哪些
+        (1) synchronized 关键字
+        (2) wait()方法与notify()方法
+        (3) Lock
+    12、sleep()方法与wait()方法有什么区别
+        (1) sleep()是属于Thread的静态方法；wait()是属于Object中的成员方法
+        (2) sleep()方法不会释放已持有的锁并进入Timed_Waiting状态；wait()方法会释放已持有的锁并进入到Wating状态
+        (3) wait()方法生效后线程进入到Wating状态，唤醒是需要在其它线程中通过锁对象去调用notify()或者notifyAll()方法实现的
+    13、实现线程的方式有哪些
         (1) 继承Thread类，重写run()方法，启动线程start()方法，（ public class Thread implements Runnable {...} ）
         (2) 实现Runnable接口，重写run()方法，new Thread(new Runnable(){...}).start();
         (3) 实现Callable<泛型>接口，重写call()方法，返回值是泛型，通过FutureTask包裹一层后再作为参数传入new Thread(ft).start();
@@ -386,7 +415,7 @@ java多线程：
                         // ExecutorService threadPool = Executors.newSingleThreadExecutor();
                         // Future<String> futureTask = threadPool.submit(new CallableTest());
                         try {
-                            // 等待t1线程结束，并获取返回结果（等待期间当前main线程会阻塞，直接call方法结束并返回结果）
+                            // 等待t1线程结束，并获取返回结果（等待期间当前main线程会阻塞，直到call()方法结束并返回结果）
                             System.out.println( futureTask.get() );
                         } catch (InterruptedException e) {
                             e.printStackTrace();
@@ -399,26 +428,9 @@ java多线程：
         (5) Callable 与 Runnable接口的区别
              1）Callable可以在任务结束后提供一个返回值，Runnable无法提供这个功能。
              2）Callable中的call()方法可以抛出异常，而Runnable的run()方法不能抛出异常。
-             3）使用Callable方式可以拿到一个Future接口的实现类对象，此对象表示异步计算的结果，它提供了检查计算是否完成的方法。
+             3）使用Callable方式可以拿到一个Future接口的实现类对象，此对象表示异步计算的结果，它提供了检查线程是否完成的方法。
                 由于线程属于异步计算模型，因此无法从别的线程中得到方法的返回值，在这种情况下，就可以使用此对象来监视目标线程调用call()方法的情况，
                 当调用Future的get()方法以获取结果时，当前线程就会阻塞，直到call()方法执行结果并返回结果。
-    3、多线程同步的实现方法有哪些
-        (1) synchronized 关键字
-        (2) wait()方法与notify()方法
-        (3) Lock
-    4、sleep()方法与wait()方法有什么区别
-
-    2、join：
-    3、wait：
-    4、sleep：
-    5、yield：
-    6、notify：方法的作用是唤醒某个线程，但不能唤醒某个具体的线程
-    7、notifyAll：唤醒所有线程并允许他们争夺锁确保了至少有一个线程能继续运行
-    8、为什么wait, notify 和 notifyAll这些方法不在thread类里面？
-        一个很明显的原因是JAVA提供的锁是对象级的而不是线程级的，每个对象都有锁。
-        wait，notify和notifyAll都是锁级别的操作，所以把他们定义在Object类中因为锁属于对象
-    9、interrupted 和 isInterrupted方法的区别？
-    10、volatile
     其他：
         (1) 死锁：
                 概念：多个并发线程因争夺资源而产生相互等待的现象。
@@ -541,6 +553,7 @@ Docker容器：
     3、js
     4、BootStrap
     5、Ajax
+    6、Layer
 
 其它：
     1、数据库调优
