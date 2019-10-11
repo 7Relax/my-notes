@@ -345,8 +345,8 @@ java多线程：
             而其他竞争锁的线程就从Runnable到了Blocked状态，当某个线程竞争到锁了它就变成了Runnable状态。
         (4) Waiting      （无时间限制的等待状态）
             有三种情况会使得Runnable状态到Waiting状态，一旦唤醒后就会回到Runnable状态
-              1）调用无参的Object.wait()方法。等到notifyAll()或者notify()唤醒就会回到Runnable状态。
-              2）调用无参的Thread.join()方法。也就是比如你在主线程里面建立了一个线程t1，调用t1.join()，那么你的主线程需要等t1执行完了才会继续执行，这时你的主线程就是Waiting状态。
+              1）调用无参的Object.wait()方法。等到notify()或者notifyAll()唤醒就会回到Runnable状态。
+              2）调用无参的Thread.join()方法。主线程里启动了一个线程t1，调用t1.join()，这时你的主线程需要等t1执行完了才会继续执行，这时你的主线程就是Waiting状态。
               3）调用LockSupport.park()方法。LockSupport是Java6引入的一个工具类，Java并发包中的锁都是基于它实现的，再调用LockSupport.unpark(Thread thread)，就会回到Runnable状态。
         (5) Timed_Waiting（有时间限制的等待状态）
             有五种情况会使得Runnable状态到Timed_Waiting状态，一旦唤醒或超时后就会回到Runnable状态
@@ -360,7 +360,8 @@ java多线程：
               1）线程正常run结束之后或者run中途出现异常了就变成终止状态
               2）Thread.stop()是让线程终止的，但是此方法已经被废弃（@Deprecated）了，不推荐使用。
                  因为比如你这个线程得到了锁，你stop了之后这个锁也随着没了，其它线程就都拿不到这个锁了！这不玩完了么！所以推荐使用interrupt()方法。
-    2、join()：等待线程执行终止之后，继续执行本线程的内容（join不是static方法，本质是调用wait方法来实现），可以使用CountDownLatch也可以达到相同效果。
+    2、join()：
+        等待线程执行终止之后，继续执行本线程的内容（join不是static方法，本质是调用wait方法来实现），可以使用CountDownLatch也可以达到相同效果。
     3、wait()：
     	(1) wait()方法不带参：
     	    释放锁。线程进入到无限期的等待状态，Runnable -> Waiting状态，需要其它线程调用此锁对象的notify()方法或notifyAll()方法后方可唤醒即回到Runnable状态。
@@ -373,14 +374,30 @@ java多线程：
             当在main线程中调用其它线程（如：t1线程）的sleep方法时，会使main线程自己进入到Timed_Waiting状态，而不清楚是否影响到t1线程。
             查看sleep方法也没有发现是调用当前线程的，所以没懂为什么main会进入Time_Waiting状态。
     5、yield()：
-        不释放锁。建议cpu进行下一轮调度工作，但cpu可以采纳意见也可以不采纳，若采纳意见则进入就绪状态（Runnable状态）
+        不释放锁。放弃本次cpu时间片并进入Runnable状态。
     6、notify()：方法的作用是唤醒某个线程，但不能唤醒某个具体的线程。
     7、notifyAll()：唤醒所有线程并允许它们争夺锁，确保了至少有一个线程能继续运行，这样会造成锁竞争问题。
-    8、interrupt()、interrupted()、isInterrupted()、isInterrupted()
+    8、interrupt()、interrupted()、isInterrupted()、isInterrupted(boolean ClearInterrupted)
+        (1) interrupt()
+              把线程的中断标记设置为：true，不会主动将线程中断，只是打个标记而已。（底层实现：实际是调用了native方法：interrupt0）
+              注意：
+                  若在线程t1中调用t2.interrupt()，此时t2线程中若有join、wait、sleep的地方正处于等待状态，那么就会抛出InterruptedException异常（相当于打断了t2线程的等待状态）
+                  实际上：t2线程在执行join、wait、sleep方法前的中断状态（isInterrupted()）为true的话，那么在即将执行的join、wait、sleep方法时就会抛出中断异常。
+        (2) interrupted() --- 静态方法
+              先返回当前线程是否有中断标记（有中断标记则返回true），再清除中断标记（设置为false）
+              注意：此方法只是针对当前的线程，所以可以直接用Thread.interrupted()的方式调用就可以了，因为此静态方法里写的是return currentThread().isInterrupted(true); 
+        (3) isInterrupted()无参：
+              只返回线程是否有中断标记（有中断标记则返回true，没有则返回false）
+        (4) isInterrupted(boolean ClearInterrupted)有参：
+              本地native方法：private native boolean isInterrupted(boolean ClearInterrupted);
+        注意：
+            * t1线程去中断t2线程（ t2.interrupt() ），如果t2线程（t1为被中断线程）里有join、wait、sleep处在正在等待的状态，则会抛出InterruptedException异常
+            * 抛出异常后，中断标记的值变为false
+            * 一定是出现了中断标记的变化才会抛出InterruptedException异常，异常的位置还一定是在join、wait、sleep等这样带有Waiting的地方
     9、volatile关键字
-    10、为什么wait, notify 和 notifyAll这些方法不在thread类里面？
+    10、为什么wait、notify 和 notifyAll这些方法不在thread类里面？
         一个很明显的原因是JAVA提供的锁是对象级的而不是线程级的，每个对象都有锁。
-        wait，notify和notifyAll都是锁级别的操作，所以把他们定义在Object类中因为锁属于对象
+        wait，notify和notifyAll都是锁级别的操作，所以把他们定义在Object类中因为锁属于对象。
     11、多线程同步的实现方法有哪些
         (1) synchronized 关键字
         (2) wait()方法与notify()方法
@@ -526,6 +543,7 @@ SpringCloud：
 缓存：
     1、redis
         (1) 常用数据类型
+        (2) 发布订阅
     2、MemCache
 
 数据库相关：
